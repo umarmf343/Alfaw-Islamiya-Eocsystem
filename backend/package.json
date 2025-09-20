@@ -1,0 +1,14 @@
+{
+  "name": "alfawz-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "axios": "^1.6.0",
+    "laravel-vite-plugin": "^0.7.8",
+    "vite": "^5.0.0"
+  }
+}
