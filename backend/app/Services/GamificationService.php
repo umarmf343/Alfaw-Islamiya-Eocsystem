@@ -29,7 +29,9 @@ class GamificationService
             ->where('user_id', $user->id)
             ->orderByDesc('date')
             ->limit(30)
-            ->get();
+            ->get()
+            ->sortBy('date')
+            ->values();
 
         $currentStreak = 0;
         $longestStreak = 0;
@@ -37,11 +39,14 @@ class GamificationService
 
         foreach ($habits as $habit) {
             if (! $habit->completed) {
+                $currentStreak = 0;
                 $previousDate = null;
                 continue;
             }
 
-            if ($previousDate === null || $habit->date->diffInDays($previousDate) === 1) {
+            if ($previousDate === null) {
+                $currentStreak = 1;
+            } elseif ($habit->date->diffInDays($previousDate, true) == 1) {
                 $currentStreak++;
             } else {
                 $currentStreak = 1;
