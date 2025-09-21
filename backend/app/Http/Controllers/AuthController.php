@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -23,7 +24,8 @@ class AuthController extends Controller
         ]);
 
         if (isset($data['role'])) {
-            $user->assignRole($data['role']);
+            $role = Role::findOrCreate($data['role']);
+            $user->assignRole($role);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
