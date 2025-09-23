@@ -16,8 +16,9 @@ class RecitationStoreRequest extends FormRequest
         return [
             'surah' => ['required', 'string'],
             'ayah_range' => ['required', 'string'],
-            'audio_path' => ['required', 'string'],
+            'audio' => ['required', 'file', 'mimetypes:audio/mpeg,audio/wav,audio/mp4,audio/x-m4a', 'max:25600'],
             'expected_text' => ['required', 'string'],
+            'assignment_id' => ['nullable', 'integer', 'exists:assignments,id'],
         ];
     }
 }

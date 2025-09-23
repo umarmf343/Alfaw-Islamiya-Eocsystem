@@ -1,22 +1,34 @@
-# AlFawz Backend
+# AlFawz Laravel Application
 
-This directory contains a Laravel-inspired API skeleton tailored for the AlFawz Qur'an Institute platform.
+This directory now houses the full-stack Laravel app for the AlFawz Qur'an Institute. Blade views deliver the frontend, Sanctum secures APIs, and queues/schedules handle heavy lifting such as Whisper transcription and leaderboard caching.
 
-## Getting Started
+## Quick start
 
-1. Install dependencies: `composer install`
-2. Copy `.env.example` to `.env` and configure database, Paystack, Whisper, and S3 credentials.
-3. Generate the application key: `php artisan key:generate`
-4. Run migrations: `php artisan migrate`
-5. Start the development server: `php artisan serve`
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm run dev
+php artisan serve
+```
 
-## Code Style
+Visit `http://localhost:8000` to browse the animated landing page, register as a student or teacher, and explore the dashboards.
 
-* Controllers focus on orchestration and delegate work to services.
-* Form requests validate inbound data and authorize resource access.
-* Policies enforce role-specific authorization.
-* Services encapsulate domain logic like Hasanat, spaced repetition, payments, and gamification.
+## Operational notes
+
+- `queue:work` must be running for `ProcessRecitationSubmission` jobs that call the Whisper API and write Hasanat ledgers.
+- `leaderboard:capture` is scheduled hourly in `app/Console/Kernel.php`; add it to cron if you are not using `php artisan schedule:work`.
+- Paystack webhooks hit `/api/payments/webhook` and require `PAYSTACK_WEBHOOK_SECRET` to be configured. Successful charges automatically enrol students using the payload metadata.
+- Audio uploads are stored on the `public` disk. Run `php artisan storage:link` in environments serving files locally or configure S3-compatible storage.
 
 ## Testing
 
-Execute the test suite with `php artisan test`.
+Run all automated checks with:
+
+```bash
+php artisan test
+```
+
+Tests assert registration flows, webhook fulfilment, queued recitation processing, and leaderboard captures.

@@ -9,7 +9,10 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('leaderboard:capture')->hourly();
+        $schedule->command('queue:work', ['--stop-when-empty' => true])
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
     }
 
     protected function commands(): void

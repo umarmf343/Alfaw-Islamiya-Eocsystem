@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 class PaystackService
@@ -53,8 +54,19 @@ class PaystackService
         }
 
         if ($event === 'charge.success') {
+            DB::transaction(function () use ($payment, $data) {
+                $payment->update([
+                    'status' => 'successful',
+                    'metadata' => $data,
+                ]);
+
+                $this->fulfill($payment);
+            });
+        }
+
+        if ($event === 'charge.failed') {
             $payment->update([
-                'status' => 'successful',
+                'status' => 'failed',
                 'metadata' => $data,
             ]);
         }
@@ -86,5 +98,25 @@ class PaystackService
         $generated = hash_hmac('sha512', json_encode($payload), $secret);
 
         return hash_equals($generated, $signature);
+    }
+
+    protected function fulfill(Payment $payment): void
+    {
+        $metadata = collect($payment->metadata ?? []);
+
+        $classroomId = (int) data_get($payment->metadata, 'metadata.classroom_id', $metadata->get('classroom_id'));
+
+        if ($classroomId > 0) {
+            $payment->user?->enrollments()->updateOrCreate(
+                ['classroom_id' => $classroomId],
+                ['status' => 'active']
+            );
+        }
+
+        $role = data_get($payment->metadata, 'metadata.grant_role', $metadata->get('grant_role'));
+
+        if (is_string($role) && $payment->user && ! $payment->user->hasRole($role)) {
+            $payment->user->assignRole($role);
+        }
     }
 }

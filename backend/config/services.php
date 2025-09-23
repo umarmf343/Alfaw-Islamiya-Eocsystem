@@ -8,7 +8,7 @@ return [
     ],
 
     'openai' => [
-        'key' => env('WHISPER_API_KEY'),
-        'whisper_model' => env('WHISPER_MODEL', 'whisper-1'),
+        'key' => env('OPENAI_API_KEY'),
+        'whisper_model' => env('OPENAI_WHISPER_MODEL', 'whisper-1'),
     ],
 ];

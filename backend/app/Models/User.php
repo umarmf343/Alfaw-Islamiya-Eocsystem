@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Classroom;
+use App\Models\Enrollment;
 use App\Models\Recitation;
 use App\Models\UserBadge;
 
@@ -41,5 +44,17 @@ class User extends Authenticatable implements MustVerifyEmail
     public function badges(): HasMany
     {
         return $this->hasMany(UserBadge::class);
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class, 'student_id');
+    }
+
+    public function classrooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Classroom::class, 'enrollments', 'student_id', 'classroom_id')
+            ->withPivot('status')
+            ->withTimestamps();
     }
 }

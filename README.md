@@ -1,110 +1,72 @@
-# AlFawz Qur'an Institute Ecosystem
+# AlFawz Qur'an Institute Platform
 
-## Overview
+AlFawz is a Laravel-first learning environment that blends Qur'an memorisation, recitation feedback, habit tracking, and institute administration inside a single PHP application. The platform now ships with a polished Blade/Tailwind interface, role-aware dashboards, asynchronous Whisper transcription, and production-ready Paystack fulfilment.
 
-The AlFawz Qur'an Institute ecosystem is a full-stack web platform designed to deliver an immersive Islamic learning experience. It focuses on Qur'an recitation, memorization, progress tracking, and habit-building for students and teachers within the institute.
+## Tech stack
 
-## Tech Stack
+- **Framework:** Laravel 11 with Blade templates
+- **Styling:** Tailwind CSS with animated gradient UI components
+- **Auth & Roles:** Laravel Sanctum + Spatie Laravel Permission
+- **Speech AI:** OpenAI Whisper API (async queue jobs)
+- **Payments:** Paystack with webhook-driven enrolment automation
+- **Database:** MySQL or MariaDB
+- **Build tooling:** Vite + PostCSS for asset compilation
 
-- **Backend:** Laravel 10/11 (PHP 8.2)
-- **Frontend:** Next.js with Tailwind CSS
-- **Database:** MySQL / MariaDB
-- **AI Services:** OpenAI Whisper API for speech-to-text validation
-- **Payments:** Paystack
-- **Hosting:** cPanel shared hosting with Cloudflare CDN and S3-compatible storage for media assets
+## Feature highlights
 
-## Core Features
+- 🌙 **Role-based dashboards** – bespoke experiences for students, teachers, and admins rendered in Blade with glassmorphism-inspired UI.
+- 🎧 **Queued recitation processing** – audio uploads are stored on the `public` disk and dispatched to background jobs that call Whisper, score similarity, and write Hasanat ledger entries.
+- 💳 **Paystack fulfilment** – successful webhooks flag payments as `successful` and automatically enrol students in classrooms or assign premium roles.
+- 🏆 **Gamification cadence** – hourly `leaderboard:capture` snapshots feed the landing page and dashboards with cached rankings.
+- 🛠️ **Operational clarity** – README, `.env.example`, and scheduler/queue hints ensure deployers can wire storage, workers, and cron with confidence.
 
-### User Roles & Authentication
+## Local development
 
-- **Admin:** Manage users, classes, payments, and system configuration.
-- **Teacher:** Assigned to classes by admins to review recitations, assignments, and student progress.
-- **Student:** Track progress, submit recitations, and participate in gamification features.
-- Authentication implemented with Laravel Sanctum and role management handled through Spatie Laravel Permission.
+1. **Install PHP dependencies**
+   ```bash
+   cd backend
+   composer install
+   ```
+2. **Install Node dependencies & build assets**
+   ```bash
+   npm install
+   npm run dev
+   ```
+3. **Environment**
+   - Copy `.env.example` to `.env` and configure database, Paystack, and OpenAI keys.
+   - Generate an application key: `php artisan key:generate`.
+   - Link storage for public assets: `php artisan storage:link`.
+4. **Database & roles**
+   ```bash
+   php artisan migrate --seed
+   ```
+   The seeder seeds the `Admin`, `Teacher`, and `Student` roles and an initial admin user (`admin@example.com`).
+5. **Serve**
+   ```bash
+   php artisan serve
+   ```
+   Visit `http://localhost:8000` to explore the animated landing page and sign up as a student or teacher.
 
-### Hasanat System
+## Operations checklist
 
-- Calculates Hasanat as `Hasanat = Number of Arabic Letters × 10` for each recitation.
-- Tracks Hasanat points in real time so students can monitor spiritual progress.
+| Concern | Command / Notes |
+| --- | --- |
+| Queue worker | `php artisan queue:work` (or Supervisor) – required for `ProcessRecitationSubmission` jobs |
+| Leaderboard snapshots | `php artisan leaderboard:capture` – scheduled hourly via `app/Console/Kernel.php` |
+| Horizon alternative | Configure if scaling beyond single worker |
+| Paystack webhook | Point Paystack to `/api/payments/webhook` with the configured `PAYSTACK_WEBHOOK_SECRET` |
+| Whisper audio storage | Configure `FILESYSTEM_DISK=public` or S3-compatible disk and ensure uploads are retained |
 
-### Recitation & Memorization
+## Testing
 
-- Displays Qur'an text in Uthmani script with translations.
-- Validates recitations using OpenAI Whisper to detect pronunciation errors, missed words, and timing issues.
-- Implements an SM-2 spaced repetition system for memorization reviews, including flashcards for challenging verses and words.
+Run the full PHP test suite from the `backend` directory:
 
-### Teacher Dashboard
+```bash
+php artisan test
+```
 
-- Enables review of student submissions, grading, and personalized feedback (text or audio).
-- Provides analytics on class performance to highlight both top achievers and students needing assistance.
-- Teachers cannot create classes themselves; admins handle class assignments.
-
-### Admin Dashboard
-
-- Controls user management, role assignment, class creation, and teacher assignments.
-- Monitors and manages payment processing, tuition, and subscription plans through Paystack integration.
-- Provides Hasanat reporting and progress oversight across the platform.
-
-### Payments (Paystack)
-
-- Supports one-time payments and recurring subscriptions for class enrollments.
-- Includes webhook handling to confirm payments and grant course access after successful transactions.
-
-### UI/UX & Accessibility
-
-- Tailwind CSS-driven responsive design with a maroon primary palette, milk secondary palette, and gold accents.
-- Personalized dashboards for students and teachers.
-- Accessibility features: keyboard navigation, RTL support for Arabic, dyslexic-friendly fonts, and language switching between Arabic and English.
-
-### Gamification & Habit Building
-
-- Leaderboards at global and class levels.
-- Badge system for milestones (e.g., "Surah Master", "30-day Streak").
-- Daily streak tracking and habit check-ins for continuous engagement.
-
-### Offline Mode (PWA)
-
-- Provides offline access to recent ayahs, translations, and audio segments using IndexedDB.
-- Allows offline recording of recitations with synchronization upon reconnecting to the internet.
-
-### Security & Privacy
-
-- Token-based authentication using Laravel Sanctum.
-- Role-based access control via Spatie Laravel Permission.
-- Secure media uploads to S3-compatible storage with mandatory HTTPS.
-- GDPR-aligned features: data export, deletion, and retention policies.
-
-## Backend Implementation Outline (Laravel)
-
-1. Configure Sanctum and Spatie permissions for Admin, Teacher, and Student roles.
-2. Build models and migrations for users, classrooms, assignments, progress tracking, payments, Hasanat ledger, badges, and leaderboards.
-3. Create RESTful API endpoints for authentication, recitation submissions, payment processing, class management, and gamification features.
-4. Integrate OpenAI Whisper for transcription and recitation feedback.
-5. Implement the SM-2 spaced repetition algorithm and Hasanat calculations.
-6. Utilize queues and scheduled tasks for background processing (e.g., Whisper transcription, leaderboard updates).
-
-### Repository Layout
-
-- `backend/` – Laravel-inspired API skeleton with controllers, services, policies, and database migrations covering Hasanat, recitations, memorisation reviews, gamification, and Paystack payments.
-- `frontend/` – Next.js application styled with Tailwind CSS delivering dashboards, marketing, and leaderboard views.
-- `README.md` – Project overview and implementation guidance.
-
-## Frontend Implementation Outline (Next.js)
-
-1. Build dashboards for students, teachers, and admins with Tailwind CSS components.
-2. Implement authentication flows and secure API interactions using SWR or React Query.
-3. Develop recitation interfaces with audio recording, feedback visualization, and Hasanat tracking.
-4. Deliver gamification experiences with leaderboards, badges, and streak tracking.
-5. Implement PWA features for offline reading and recording with IndexedDB storage.
-
-## Deployment Notes
-
-1. Deploy Laravel backend on cPanel, keeping backend files organized in subdirectories.
-2. Generate a static build for the Next.js frontend and place it in `public/app` for Laravel to serve.
-3. Configure environment variables for database, Paystack, Whisper API, and S3-compatible storage.
-4. Set up cron jobs for queue workers, spaced repetition reminders, leaderboard snapshots, and other scheduled tasks.
-5. Enable SSL, Cloudflare CDN, and caching strategies for performance and security.
+The suite now covers registration, async recitation jobs, Paystack webhook fulfilment, and leaderboard capture.
 
 ---
 
-This document serves as a roadmap for building the AlFawz Qur'an Institute application, ensuring the platform remains focused on Qur'an education, spiritual growth, and meaningful engagement for students and teachers alike.
+Built with ❤️ to help learners recite, memorise, and thrive.
