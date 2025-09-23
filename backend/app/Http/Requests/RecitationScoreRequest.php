@@ -15,8 +15,9 @@ class RecitationScoreRequest extends FormRequest
     {
         return [
             'score' => ['required', 'numeric', 'between:0,100'],
-            'feedback' => ['nullable', 'string'],
+            'feedback' => ['nullable', 'array'],
             'hasanat' => ['nullable', 'integer', 'min:0'],
+            'status' => ['nullable', 'string', 'in:completed,reviewed'],
         ];
     }
 }

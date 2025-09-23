@@ -21,12 +21,14 @@ class Recitation extends Model
         'feedback',
         'score',
         'hasanat',
+        'status',
     ];
 
     protected $casts = [
         'feedback' => 'array',
         'score' => 'float',
         'hasanat' => 'integer',
+        'status' => 'string',
     ];
 
     public function user(): BelongsTo

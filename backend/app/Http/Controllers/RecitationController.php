@@ -4,19 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RecitationScoreRequest;
 use App\Http\Requests\RecitationStoreRequest;
+use App\Jobs\ProcessRecitationSubmission;
 use App\Models\Recitation;
-use App\Services\HasanatService;
-use App\Services\RecitationFeedbackService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RecitationController extends Controller
 {
-    public function __construct(
-        private RecitationFeedbackService $feedbackService,
-        private HasanatService $hasanatService
-    ) {
-    }
 
     public function index(Request $request): JsonResponse
     {
@@ -30,26 +24,29 @@ class RecitationController extends Controller
 
     public function store(RecitationStoreRequest $request): JsonResponse
     {
-        $data = array_merge(
-            $request->validated(),
-            ['user_id' => $request->user()->id]
+        $payload = $request->validated();
+
+        $storedPath = $request->file('audio')->store(
+            'recitations/' . $request->user()->id,
+            'public'
         );
 
-        $feedback = $this->feedbackService->transcribeAndScore($data['audio_path'], $data['expected_text']);
-        $hasanat = $this->hasanatService->calculateForText($data['expected_text']);
+        $recitation = Recitation::create([
+            'user_id' => $request->user()->id,
+            'assignment_id' => $payload['assignment_id'] ?? null,
+            'surah' => $payload['surah'],
+            'ayah_range' => $payload['ayah_range'],
+            'audio_path' => $storedPath,
+            'expected_text' => $payload['expected_text'],
+            'status' => 'processing',
+        ]);
 
-        $recitation = Recitation::create(array_merge($data, [
-            'feedback' => $feedback,
-            'hasanat' => $hasanat,
-        ]));
-
-        $ledger = $this->hasanatService->record($recitation, $hasanat, 'recitation_submission');
+        ProcessRecitationSubmission::dispatch($recitation->id);
 
         return response()->json([
-            'recitation' => $recitation,
-            'feedback' => $feedback,
-            'hasanat_entry' => $ledger,
-        ], 201);
+            'recitation' => $recitation->fresh(),
+            'message' => 'Recitation received. Feedback will be available once processing completes.',
+        ], 202);
     }
 
     public function score(RecitationScoreRequest $request, Recitation $recitation): JsonResponse

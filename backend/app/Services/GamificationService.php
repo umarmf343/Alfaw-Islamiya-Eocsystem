@@ -6,6 +6,7 @@ use App\Models\DailyHabit;
 use App\Models\LeaderboardSnapshot;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 
 class GamificationService
 {
@@ -71,6 +72,17 @@ class GamificationService
                 'name' => $award->badge->name,
                 'awarded_at' => $award->awarded_at,
             ])->toArray();
+    }
+
+    public function captureSnapshot(string $scope): LeaderboardSnapshot
+    {
+        $leaderboard = $this->generateLeaderboard($scope);
+
+        return LeaderboardSnapshot::create([
+            'scope' => $scope,
+            'payload' => $leaderboard->toArray(),
+            'captured_at' => Carbon::now(),
+        ]);
     }
 
     protected function generateLeaderboard(string $scope): Collection
